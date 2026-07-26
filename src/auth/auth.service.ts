@@ -91,4 +91,11 @@ export class AuthService {
       user: userWithoutPassword,
     };
   }
+
+  async logout(req: any) {
+    return {
+      message: 'Logout successful',
+      user: req?.user || null,
+    };
+  }
 }
