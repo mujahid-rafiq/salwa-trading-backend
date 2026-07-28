@@ -40,6 +40,32 @@ export class User {
 
   @Column({
     type: 'varchar',
+    length: 6,
+    nullable: true,
+  })
+  passwordResetCode: string | null;
+
+  @Column({
+    type: 'datetime',
+    nullable: true,
+  })
+  passwordResetExpiresAt: Date | null;
+
+  @Column({
+    type: 'varchar',
+    length: 6,
+    nullable: true,
+  })
+  emailVerificationCode: string | null;
+
+  @Column({
+    type: 'datetime',
+    nullable: true,
+  })
+  emailVerificationExpiresAt: Date | null;
+
+  @Column({
+    type: 'varchar',
     length: 20,
     default: 'user',
   })

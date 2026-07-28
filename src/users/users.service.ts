@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DeepPartial } from 'typeorm';
 
 import { User } from './entities/user.entity';
 import { RegisterDto } from '../auth/dto/register.dto';
@@ -12,7 +12,7 @@ export class UsersService {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  async create(registerDto: RegisterDto): Promise<User> {
+  async create(registerDto: DeepPartial<User>): Promise<User> {
     const user = this.userRepository.create(registerDto);
     return await this.userRepository.save(user);
   }
@@ -40,10 +40,14 @@ export class UsersService {
   }
 
   async findByPhoneNumber(phoneNumber: string): Promise<User | null> {
-  return await this.userRepository.findOne({
-    where: { phoneNumber },
-  });
-}
+    return await this.userRepository.findOne({
+      where: { phoneNumber },
+    });
+  }
+
+  async save(user: User): Promise<User> {
+    return await this.userRepository.save(user);
+  }
 
   async remove(id: number) {
     const user = await this.findOne(id);

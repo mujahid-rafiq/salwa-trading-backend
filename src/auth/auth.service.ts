@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -9,12 +10,17 @@ import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { VerifyOtpDto } from './dto/verify-otp.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
+    private readonly mailService: MailService,
   ) {}
 
   async register(registerDto: RegisterDto) {
@@ -39,17 +45,41 @@ export class AuthService {
     // Hash password
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
 
-    // Save user
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Save user with activation code
     const user = await this.usersService.create({
       ...registerDto,
       password: hashedPassword,
+      isVerified: false,
+      emailVerificationCode: verificationCode,
+      emailVerificationExpiresAt: new Date(Date.now() + 15 * 60 * 1000),
     });
 
     // Remove password from response
     const { password, ...userWithoutPassword } = user;
 
+    try {
+      await this.mailService.sendMail(
+        registerDto.email,
+        'Verify your Salwa Trading account',
+        `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #f0d56b; border-radius: 12px; background: #fffdf7;">
+            <h2 style="color: #b8860b;">Verify Your Email</h2>
+            <p>Hi ${registerDto.fullName || 'there'},</p>
+            <p>Use the OTP below to verify your email address and activate your account.</p>
+            <p style="font-size: 24px; font-weight: bold; color: #333;">${verificationCode}</p>
+            <p>This code is valid for 15 minutes.</p>
+            <p style="margin-top: 20px;">Thanks,<br />The Salwa Trading Team</p>
+          </div>
+        `,
+      );
+    } catch (error) {
+      console.error('Failed to send verification email:', error);
+    }
+
     return {
-      message: 'User registered successfully',
+      message: 'User registered successfully. Please verify your email.',
       user: userWithoutPassword,
     };
   }
@@ -60,6 +90,10 @@ export class AuthService {
 
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
+    }
+
+    if (!user.isVerified) {
+      throw new UnauthorizedException('Email is not verified. Please verify your email.');
     }
 
     // Compare password
@@ -89,6 +123,187 @@ export class AuthService {
       message: 'Login successful',
       accessToken,
       user: userWithoutPassword,
+    };
+  }
+
+  async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
+    const user = await this.usersService.findByEmail(forgotPasswordDto.email);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    user.passwordResetCode = otp;
+    user.passwordResetExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+    await this.usersService.save(user);
+
+    try {
+      await this.mailService.sendMail(
+        user.email,
+        'Salwa Trading Password Reset OTP',
+        `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #f0d56b; border-radius: 12px; background: #fffdf7;">
+            <h2 style="color: #b8860b;">Password Reset OTP</h2>
+            <p>Hi ${user.fullName || 'there'},</p>
+            <p>Your OTP code is:</p>
+            <p style="font-size: 24px; font-weight: bold; color: #333;">${otp}</p>
+            <p>This code is valid for 15 minutes.</p>
+            <p style="margin-top: 20px;">If you did not request this, please ignore this email.</p>
+          </div>
+        `,
+      );
+    } catch (error) {
+      console.error('Failed to send OTP email:', error);
+    }
+
+    return {
+      message: 'OTP sent to your email',
+      email: user.email,
+    };
+  }
+
+  async activateAccount(verifyOtpDto: VerifyOtpDto) {
+    const user = await this.usersService.findByEmail(verifyOtpDto.email);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.isVerified) {
+      return {
+        message: 'Account already verified',
+      };
+    }
+
+    if (
+      !user.emailVerificationCode ||
+      !user.emailVerificationExpiresAt ||
+      user.emailVerificationCode !== verifyOtpDto.otp
+    ) {
+      throw new BadRequestException('Invalid email or OTP code');
+    }
+
+    if (user.emailVerificationExpiresAt < new Date()) {
+      throw new BadRequestException('OTP code has expired');
+    }
+
+    user.isVerified = true;
+    user.emailVerificationCode = null;
+    user.emailVerificationExpiresAt = null;
+    await this.usersService.save(user);
+
+    try {
+      await this.mailService.sendMail(
+        user.email,
+        'Welcome to Salwa Trading',
+        `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #f0d56b; border-radius: 12px; background: #fffdf7;">
+            <h2 style="color: #b8860b;">Welcome to Salwa Trading</h2>
+            <p>Hi ${user.fullName || 'there'},</p>
+            <p>Your account has been successfully verified.</p>
+            <p>We’re excited to have you on board.</p>
+            <p style="margin-top: 20px;">Thanks,<br />The Salwa Trading Team</p>
+          </div>
+        `,
+      );
+    } catch (error) {
+      console.error('Failed to send welcome email after verification:', error);
+    }
+
+    return {
+      message: 'Account verified successfully',
+    };
+  }
+
+  async resendActivationCode(forgotPasswordDto: ForgotPasswordDto) {
+    const user = await this.usersService.findByEmail(forgotPasswordDto.email);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.isVerified) {
+      throw new BadRequestException('Account is already verified');
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    user.emailVerificationCode = otp;
+    user.emailVerificationExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+    await this.usersService.save(user);
+
+    try {
+      await this.mailService.sendMail(
+        user.email,
+        'Salwa Trading Email Verification OTP',
+        `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #f0d56b; border-radius: 12px; background: #fffdf7;">
+            <h2 style="color: #b8860b;">Email Verification OTP</h2>
+            <p>Hi ${user.fullName || 'there'},</p>
+            <p>Your new OTP code is:</p>
+            <p style="font-size: 24px; font-weight: bold; color: #333;">${otp}</p>
+            <p>This code is valid for 15 minutes.</p>
+            <p style="margin-top: 20px;">If you did not request this, please ignore this email.</p>
+          </div>
+        `,
+      );
+    } catch (error) {
+      console.error('Failed to send activation OTP email:', error);
+    }
+
+    return {
+      message: 'Activation OTP resent to your email',
+    };
+  }
+
+  async verifyOtp(verifyOtpDto: VerifyOtpDto) {
+    const user = await this.usersService.findByEmail(verifyOtpDto.email);
+    if (
+      !user ||
+      !user.passwordResetCode ||
+      !user.passwordResetExpiresAt ||
+      user.passwordResetCode !== verifyOtpDto.otp
+    ) {
+      throw new BadRequestException('Invalid email or OTP code');
+    }
+
+    if (user.passwordResetExpiresAt < new Date()) {
+      throw new BadRequestException('OTP code has expired');
+    }
+
+    return {
+      message: 'OTP verified successfully',
+    };
+  }
+
+  async resetPassword(resetPasswordDto: ResetPasswordDto) {
+    const user = await this.usersService.findByEmail(resetPasswordDto.email);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (
+      !user.passwordResetCode ||
+      !user.passwordResetExpiresAt ||
+      user.passwordResetCode !== resetPasswordDto.otpCode
+    ) {
+      throw new BadRequestException('Invalid OTP code');
+    }
+
+    if (user.passwordResetExpiresAt < new Date()) {
+      throw new BadRequestException('OTP code has expired');
+    }
+
+    if (resetPasswordDto.newPassword !== resetPasswordDto.confirmPassword) {
+      throw new BadRequestException('Passwords do not match');
+    }
+
+    user.password = await bcrypt.hash(resetPasswordDto.newPassword, 10);
+    user.passwordResetCode = null;
+    user.passwordResetExpiresAt = null;
+    await this.usersService.save(user);
+
+    return {
+      message: 'Password reset successful',
     };
   }
 
