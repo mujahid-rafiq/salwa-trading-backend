@@ -1,5 +1,6 @@
-import { Body, Controller, Post, Req } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Post, Req, UseGuards } from '@nestjs/common';
 import {
+  ApiBearerAuth,
   ApiOperation,
   ApiResponse,
   ApiTags,
@@ -11,8 +12,13 @@ import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { Roles } from './decorators/roles.decorator';
+import { Role } from './roles.enum';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { RolesGuard } from './guards/roles.guard';
 
 @ApiTags('Authentication')
+@ApiBearerAuth()
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -25,6 +31,18 @@ export class AuthController {
   })
   register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @Post('register-admin')
+  @ApiOperation({ summary: 'Register a new admin user' })
+  @ApiResponse({
+    status: 201,
+    description: 'Admin registered successfully',
+  })
+  registerAdmin(@Body() registerDto: RegisterDto) {
+    return this.authService.registerAdmin(registerDto);
   }
 
   @Post('login')
@@ -85,6 +103,32 @@ export class AuthController {
   })
   resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
     return this.authService.resetPassword(resetPasswordDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('profile')
+  @ApiOperation({ summary: 'Get authenticated user profile' })
+  @ApiResponse({
+    status: 200,
+    description: 'User profile retrieved successfully',
+  })
+  getProfile(@Req() req: any) {
+    return { user: req.user };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @Get('admin-dashboard')
+  @ApiOperation({ summary: 'Get admin dashboard data' })
+  @ApiResponse({
+    status: 200,
+    description: 'Admin dashboard retrieved successfully',
+  })
+  adminDashboard(@Req() req: any) {
+    return {
+      message: 'Admin dashboard access granted',
+      user: req.user,
+    };
   }
 
   @Post('logout')

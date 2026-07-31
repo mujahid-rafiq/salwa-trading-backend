@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Role } from '../../auth/roles.enum';
 
 @Entity({ name: 'users' })
 export class User {
@@ -67,9 +68,9 @@ export class User {
   @Column({
     type: 'varchar',
     length: 20,
-    default: 'user',
+    default: Role.CLIENT,
   })
-  role!: string;
+  role!: Role;
 
   @Column({
     type: 'boolean',

@@ -8,6 +8,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
 import { UsersService } from '../users/users.service';
+import { Role } from './roles.enum';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
@@ -51,6 +52,7 @@ export class AuthService {
     const user = await this.usersService.create({
       ...registerDto,
       password: hashedPassword,
+      role: Role.CLIENT,
       isVerified: false,
       emailVerificationCode: verificationCode,
       emailVerificationExpiresAt: new Date(Date.now() + 15 * 60 * 1000),
@@ -80,6 +82,66 @@ export class AuthService {
 
     return {
       message: 'User registered successfully. Please verify your email.',
+      user: userWithoutPassword,
+    };
+  }
+
+  async registerAdmin(registerDto: RegisterDto) {
+    // Check if email already exists
+    const existingEmail = await this.usersService.findByEmail(
+      registerDto.email,
+    );
+
+    if (existingEmail) {
+      throw new BadRequestException('Email already exists');
+    }
+
+    // Check if phone number already exists
+    const existingPhone = await this.usersService.findByPhoneNumber(
+      registerDto.phoneNumber,
+    );
+
+    if (existingPhone) {
+      throw new BadRequestException('Phone number already exists');
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(registerDto.password, 10);
+
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+    const user = await this.usersService.create({
+      ...registerDto,
+      password: hashedPassword,
+      role: Role.ADMIN,
+      isVerified: false,
+      emailVerificationCode: verificationCode,
+      emailVerificationExpiresAt: new Date(Date.now() + 15 * 60 * 1000),
+    });
+
+    const { password, ...userWithoutPassword } = user;
+
+    try {
+      await this.mailService.sendMail(
+        registerDto.email,
+        'Verify your Salwa Trading admin account',
+        `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #f0d56b; border-radius: 12px; background: #fffdf7;">
+            <h2 style="color: #b8860b;">Verify Your Admin Email</h2>
+            <p>Hi ${registerDto.fullName || 'there'},</p>
+            <p>Use the OTP below to verify your admin account.</p>
+            <p style="font-size: 24px; font-weight: bold; color: #333;">${verificationCode}</p>
+            <p>This code is valid for 15 minutes.</p>
+            <p style="margin-top: 20px;">Thanks,<br />The Salwa Trading Team</p>
+          </div>
+        `,
+      );
+    } catch (error) {
+      console.error('Failed to send verification email:', error);
+    }
+
+    return {
+      message: 'Admin registered successfully. Please verify your email.',
       user: userWithoutPassword,
     };
   }
@@ -304,6 +366,28 @@ export class AuthService {
 
     return {
       message: 'Password reset successful',
+    };
+  }
+
+  async getProfile(authorization?: string) {
+    if (!authorization || !authorization.startsWith('Bearer ')) {
+      throw new UnauthorizedException('Missing or invalid authorization header');
+    }
+
+    const token = authorization.replace('Bearer ', '').trim();
+
+    let payload: any;
+    try {
+      payload = await this.jwtService.verifyAsync(token);
+    } catch (error) {
+      throw new UnauthorizedException('Invalid or expired access token');
+    }
+
+    const user = await this.usersService.findOne(payload.sub);
+    const { password, ...userWithoutPassword } = user;
+
+    return {
+      user: userWithoutPassword,
     };
   }
 
