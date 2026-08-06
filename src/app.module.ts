@@ -8,6 +8,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { PackageRequestsModule } from './package-requests/package-requests.module';
+import { UploadsModule } from './uploads/uploads.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { PackageRequestsModule } from './package-requests/package-requests.modul
     AuthModule,
     UsersModule,
     PackageRequestsModule,
+    UploadsModule,
   ],
 
   controllers: [AppController],

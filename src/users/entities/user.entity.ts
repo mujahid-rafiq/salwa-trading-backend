@@ -44,26 +44,26 @@ export class User {
     length: 6,
     nullable: true,
   })
-  passwordResetCode: string | null;
+  passwordResetCode: string | null = null;
 
   @Column({
     type: 'datetime',
     nullable: true,
   })
-  passwordResetExpiresAt: Date | null;
+  passwordResetExpiresAt: Date | null = null;
 
   @Column({
     type: 'varchar',
     length: 6,
     nullable: true,
   })
-  emailVerificationCode: string | null;
+  emailVerificationCode: string | null = null;
 
   @Column({
     type: 'datetime',
     nullable: true,
   })
-  emailVerificationExpiresAt: Date | null;
+  emailVerificationExpiresAt: Date | null = null;
 
   @Column({
     type: 'varchar',
@@ -89,4 +89,12 @@ export class User {
 
   @UpdateDateColumn()
   updatedAt!: Date;
+
+  @Column({
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+  })
+  profileImage?: string;
+
 }
