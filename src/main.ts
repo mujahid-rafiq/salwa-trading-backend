@@ -1,11 +1,14 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { join } from 'path';
+import { existsSync, mkdirSync } from 'fs';
 
 import { AppModule } from './app.module';
+import { qNestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<qNestExpressApplication>(AppModule);
 
   // Enable CORS for local frontend (Vite dev server)
   app.enableCors({
@@ -35,6 +38,18 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
 
   SwaggerModule.setup('api', app, document);
+
+  const uploadPath = join(process.cwd(), 'uploads');
+
+  if (!existsSync(uploadPath)) {
+    mkdirSync(uploadPath, { recursive: true });
+  }
+
+  app.useStaticAssets(uploadPath, {
+    prefix: '/uploads',
+  });
+
+
 
   await app.listen(process.env.PORT ?? 3000);
 
