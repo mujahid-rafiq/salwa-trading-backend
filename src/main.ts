@@ -5,10 +5,11 @@ import { join } from 'path';
 import { existsSync, mkdirSync } from 'fs';
 
 import { AppModule } from './app.module';
-import { NestExpressApplication } from '@nestjs/platform-express';
+import { qNestExpressApplication } from '@nestjs/platform-express';
+
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<qNestExpressApplication>(AppModule);
 
   // Enable CORS for local frontend (Vite dev server)
   app.enableCors({
