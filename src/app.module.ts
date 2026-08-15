@@ -9,6 +9,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { PackageRequestsModule } from './package-requests/package-requests.module';
 import { UploadsModule } from './uploads/uploads.module';
+import { WithdrawalsModule } from './withdrawals/withdrawals.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { UploadsModule } from './uploads/uploads.module';
     UsersModule,
     PackageRequestsModule,
     UploadsModule,
+    WithdrawalsModule,
   ],
 
   controllers: [AppController],

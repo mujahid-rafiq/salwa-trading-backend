@@ -45,6 +45,12 @@ export class UsersService {
     });
   }
 
+  async findByReferrer(referrerId: number): Promise<User[]> {
+    return await this.userRepository.find({
+      where: { referredBy: { id: referrerId } },
+    });
+  }
+
   async save(user: User): Promise<User> {
     return await this.userRepository.save(user);
   }

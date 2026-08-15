@@ -4,6 +4,8 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { Role } from '../../enums/role.enum';
 
@@ -96,5 +98,9 @@ export class User {
     nullable: true,
   })
   profileImage?: string;
+
+  @ManyToOne(() => User, { nullable: true })
+  @JoinColumn({ name: 'referred_by' })
+  referredBy?: User;
 
 }
