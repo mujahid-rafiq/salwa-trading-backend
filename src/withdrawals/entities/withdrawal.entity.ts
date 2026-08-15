@@ -1,6 +1,7 @@
 import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
-import { WithdrawalStatus } from '../../enums/withdrawal-status.enum';
+import { WithdrawalStatus } from 'src/enums/withdrawal-status.enum';
+// import { WithdrawalStatus } from '../../enums/withdrawal-status.enum';
 
 @Entity({ name: 'withdrawals' })
 export class Withdrawal {
