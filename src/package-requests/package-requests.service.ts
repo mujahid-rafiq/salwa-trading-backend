@@ -22,6 +22,7 @@ export class PackageRequestsService {
       profitRate: createDto.profitRate,
       duration: createDto.duration,
       transactionId: createDto.transactionId,
+      paymentScreenshotUrl: createDto.paymentScreenshotUrl,
       notes: createDto.notes,
     });
 

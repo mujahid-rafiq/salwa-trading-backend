@@ -34,6 +34,9 @@ export class PackageRequest {
   @Column({ type: 'varchar', length: 100, nullable: true })
   transactionId?: string;
 
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  paymentScreenshotUrl?: string;
+
   @Column({ type: 'text', nullable: true })
   notes?: string;
 

@@ -32,6 +32,12 @@ export class CreatePackageRequestDto {
   @MaxLength(100)
   transactionId?: string;
 
+  @ApiPropertyOptional({ example: '/uploads/payments/1711111234567.png' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  paymentScreenshotUrl?: string;
+
   @ApiPropertyOptional({ example: 'Sent to OKX deposit account' })
   @IsOptional()
   @IsString()
