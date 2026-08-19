@@ -51,7 +51,11 @@ export class WithdrawalsService {
       if (dto.iban) details.push(`IBAN: ${dto.iban}`);
     }
 
-    if (dto.paymentMethod === PaymentMethod.EASY_PAISA || dto.paymentMethod === PaymentMethod.JAZZ_CASH) {
+    if (
+      dto.paymentMethod === PaymentMethod.EASY_PAISA ||
+      dto.paymentMethod === PaymentMethod.JAZZ_CASH ||
+      dto.paymentMethod === PaymentMethod.USDT
+    ) {
       if (dto.accountTitle) details.push(`Account Title: ${dto.accountTitle}`);
       if (dto.mobileNumber) details.push(`Mobile Number: ${dto.mobileNumber}`);
     }
@@ -69,6 +73,7 @@ export class WithdrawalsService {
   async findPendingWithdrawals() {
     return await this.withdrawalRepository.find({
       where: { status: WithdrawalStatus.PENDING },
+      relations: { user: true },
       order: { createdAt: 'DESC' },
     });
   }
