@@ -15,14 +15,8 @@ async function bootstrap() {
   const fullName = 'Admin User';
 
   const existingByEmail = await usersService.findByEmail(email);
-  if (existingByEmail) {
-    console.log(`Admin user already exists: ${email}`);
-    await app.close();
-    process.exit(0);
-  }
-
   const existingByPhone = await usersService.findByPhoneNumber(phoneNumber);
-  if (existingByPhone) {
+  if (existingByPhone && existingByPhone.id !== existingByEmail?.id) {
     console.error(`Phone number already exists: ${phoneNumber}`);
     await app.close();
     process.exit(1);
@@ -30,17 +24,35 @@ async function bootstrap() {
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  await usersService.create({
-    fullName,
-    email,
-    phoneNumber,
-    password: hashedPassword,
-    role: Role.ADMIN,
-    isVerified: true,
-    isActive: true,
-  });
+  if (existingByEmail) {
+    Object.assign(existingByEmail, {
+      fullName,
+      email,
+      phoneNumber,
+      password: hashedPassword,
+      role: Role.ADMIN,
+      isVerified: true,
+      isActive: true,
+    });
+    await usersService.save(existingByEmail);
+  } else {
+    await usersService.create({
+      fullName,
+      email,
+      phoneNumber,
+      password: hashedPassword,
+      role: Role.ADMIN,
+      isVerified: true,
+      isActive: true,
+    });
+  }
 
-  console.log('Admin user created successfully:', email);
+  console.log(
+    existingByEmail
+      ? 'Admin user updated successfully:'
+      : 'Admin user created successfully:',
+    email,
+  );
   await app.close();
   process.exit(0);
 }
