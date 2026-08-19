@@ -12,11 +12,11 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   // Enable CORS for local frontend (Vite dev server)
- app.enableCors({
+app.enableCors({
   origin: [
     'http://localhost:5173',
     'http://localhost:5174',
-    'https://salwa-trading-frontend-16ge-q42b95jsf-salwa-trading.vercel.app',
+    'https://salwa-trading-frontend-16ge-phi.vercel.app',
   ],
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
   credentials: true,
