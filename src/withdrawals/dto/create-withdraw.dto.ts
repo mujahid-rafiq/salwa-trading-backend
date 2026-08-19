@@ -9,6 +9,7 @@ export enum PaymentMethod {
   BANK_TRANSFER = 'Bank transfer',
   EASY_PAISA = 'EasyPaisa',
   JAZZ_CASH = 'JazzCash',
+  USDT = 'USDT',
 }
 
 export class CreateWithdrawDto {
