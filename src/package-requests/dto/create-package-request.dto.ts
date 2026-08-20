@@ -20,7 +20,7 @@ export class CreatePackageRequestDto {
   @MaxLength(20)
   profitRate!: string;
 
-  @ApiProperty({ example: '30 Days' })
+  @ApiProperty({ example: '24 Days' })
   @IsNotEmpty()
   @IsString()
   @MaxLength(20)

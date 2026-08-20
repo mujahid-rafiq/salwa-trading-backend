@@ -144,6 +144,8 @@ export class WithdrawalsService {
     try {
       const requests: PackageRequest[] = await this.packageRequestsService.findByUser(user);
       const now = new Date();
+      const profitRate = 0.08;
+      const profitPeriodDays = 24;
       let earnings = 0;
 
       for (const r of requests) {
@@ -152,17 +154,12 @@ export class WithdrawalsService {
         const reviewedAt = r.reviewedAt ?? r.createdAt;
         if (!reviewedAt) continue;
 
-        const rateMatch = String(r.profitRate).match(/([0-9]+(?:\.[0-9]+)?)\s*%/);
-        const dailyRate = rateMatch ? Number(rateMatch[1]) : 0;
-
-        const durMatch = String(r.duration).match(/([0-9]+)\s*/);
-        const durationDays = durMatch ? Number(durMatch[1]) : 0;
-
         const ms = Math.max(0, now.getTime() - new Date(reviewedAt).getTime());
         const elapsedDays = Math.floor(ms / (1000 * 60 * 60 * 24));
-        const applicableDays = durationDays > 0 ? Math.min(elapsedDays, durationDays) : elapsedDays;
+        const applicableDays = Math.min(elapsedDays, profitPeriodDays);
 
-        const accrued = Number(r.amount) * (dailyRate / 100) * applicableDays;
+        const dailyProfit = (Number(r.amount) * profitRate) / profitPeriodDays;
+        const accrued = dailyProfit * applicableDays;
         earnings += accrued;
       }
 
@@ -177,14 +174,11 @@ export class WithdrawalsService {
             if (r.status !== 'Approved') continue;
             const reviewedAt = r.reviewedAt ?? r.createdAt;
             if (!reviewedAt) continue;
-            const rateMatch = String(r.profitRate).match(/([0-9]+(?:\.[0-9]+)?)\s*%/);
-            const dailyRate = rateMatch ? Number(rateMatch[1]) : 0;
-            const durMatch = String(r.duration).match(/([0-9]+)\s*/);
-            const durationDays = durMatch ? Number(durMatch[1]) : 0;
             const ms = Math.max(0, now.getTime() - new Date(reviewedAt).getTime());
             const elapsedDays = Math.floor(ms / (1000 * 60 * 60 * 24));
-            const applicableDays = durationDays > 0 ? Math.min(elapsedDays, durationDays) : elapsedDays;
-            refEarnings += Number(r.amount) * (dailyRate / 100) * applicableDays;
+            const applicableDays = Math.min(elapsedDays, profitPeriodDays);
+            const dailyProfit = (Number(r.amount) * profitRate) / profitPeriodDays;
+            refEarnings += dailyProfit * applicableDays;
           }
           totalRefEarnings += refEarnings;
         }
