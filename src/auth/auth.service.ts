@@ -64,7 +64,7 @@ export class AuthService {
     try {
       await this.mailService.sendMail(
         registerDto.email,
-        'Verify your Salwa Trading account',
+        'Verify your Noovacor account',
         `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #f0d56b; border-radius: 12px; background: #fffdf7;">
             <h2 style="color: #b8860b;">Verify Your Email</h2>
@@ -72,7 +72,7 @@ export class AuthService {
             <p>Use the OTP below to verify your email address and activate your account.</p>
             <p style="font-size: 24px; font-weight: bold; color: #333;">${verificationCode}</p>
             <p>This code is valid for 15 minutes.</p>
-            <p style="margin-top: 20px;">Thanks,<br />The Salwa Trading Team</p>
+            <p style="margin-top: 20px;">Thanks,<br />The Noovacor Team</p>
           </div>
         `,
       );
@@ -124,7 +124,7 @@ export class AuthService {
     try {
       await this.mailService.sendMail(
         registerDto.email,
-        'Verify your Salwa Trading admin account',
+        'Verify your Noovacor admin account',
         `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #f0d56b; border-radius: 12px; background: #fffdf7;">
             <h2 style="color: #b8860b;">Verify Your Admin Email</h2>
@@ -132,7 +132,7 @@ export class AuthService {
             <p>Use the OTP below to verify your admin account.</p>
             <p style="font-size: 24px; font-weight: bold; color: #333;">${verificationCode}</p>
             <p>This code is valid for 15 minutes.</p>
-            <p style="margin-top: 20px;">Thanks,<br />The Salwa Trading Team</p>
+            <p style="margin-top: 20px;">Thanks,<br />The Noovacor Team</p>
           </div>
         `,
       );
@@ -203,7 +203,7 @@ export class AuthService {
     try {
       await this.mailService.sendMail(
         user.email,
-        'Salwa Trading Password Reset OTP',
+        'Noovacor Password Reset OTP',
         `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #f0d56b; border-radius: 12px; background: #fffdf7;">
             <h2 style="color: #b8860b;">Password Reset OTP</h2>
@@ -257,14 +257,14 @@ export class AuthService {
     try {
       await this.mailService.sendMail(
         user.email,
-        'Welcome to Salwa Trading',
+        'Welcome to Noovacor',
         `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #f0d56b; border-radius: 12px; background: #fffdf7;">
-            <h2 style="color: #b8860b;">Welcome to Salwa Trading</h2>
+            <h2 style="color: #b8860b;">Welcome to Noovacor</h2>
             <p>Hi ${user.fullName || 'there'},</p>
             <p>Your account has been successfully verified.</p>
-            <p>We’re excited to have you on board.</p>
-            <p style="margin-top: 20px;">Thanks,<br />The Salwa Trading Team</p>
+            <p>We're excited to have you on board.</p>
+            <p style="margin-top: 20px;">Thanks,<br />The Noovacor Team</p>
           </div>
         `,
       );
@@ -296,7 +296,7 @@ export class AuthService {
     try {
       await this.mailService.sendMail(
         user.email,
-        'Salwa Trading Email Verification OTP',
+        'Noovacor Email Verification OTP',
         `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #f0d56b; border-radius: 12px; background: #fffdf7;">
             <h2 style="color: #b8860b;">Email Verification OTP</h2>
