@@ -16,6 +16,7 @@ app.enableCors({
   origin: [
     'http://localhost:5173',
     'http://localhost:5174',
+    'https://noovacor.com',
     'https://salwa-trading-frontend-16ge-phi.vercel.app',
   ],
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
