@@ -13,7 +13,7 @@ import { MailModule } from '../mail/mail.module';
     UsersModule,
     MailModule,
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'salwa-secret-key',
+      secret: process.env.JWT_SECRET || 'noovacor-secret-key',
       signOptions: {
         expiresIn: '1d',
       },

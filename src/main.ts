@@ -17,7 +17,7 @@ app.enableCors({
     'http://localhost:5173',
     'http://localhost:5174',
     'https://noovacor.com',
-    'https://salwa-trading-frontend-16ge-phi.vercel.app',
+    'https://noovacor-frontend.vercel.app',
   ],
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
   credentials: true,
@@ -35,8 +35,8 @@ app.enableCors({
 
   // Swagger Configuration
   const config = new DocumentBuilder()
-    .setTitle('Salwa Trading API')
-    .setDescription('Backend API Documentation for Salwa Trading System')
+    .setTitle('Noovacor API')
+    .setDescription('Backend API Documentation for Noovacor System')
     .setVersion('1.0')
     .addBearerAuth()
     .build();

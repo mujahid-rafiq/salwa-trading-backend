@@ -59,7 +59,7 @@ export class MailService {
     }
 
     await this.transporter.sendMail({
-      from: `"Salwa Trading" <${process.env.EMAIL_USER}>`,
+      from: `"Noovacor" <${process.env.EMAIL_USER}>`,
       to,
       subject,
       html,
