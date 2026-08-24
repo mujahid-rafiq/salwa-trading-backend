@@ -40,4 +40,10 @@ export class RegisterDto {
   @MinLength(6)
   @MaxLength(30)
   password!: string;
+
+  @ApiPropertyOptional({ example: 'SALWA8A1B2C' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  referralCode?: string;
 }
