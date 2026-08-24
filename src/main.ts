@@ -11,14 +11,16 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  // Enable CORS for local frontend (Vite dev server)
-app.enableCors({
-  origin: [
-    'http://localhost:5173',
-    'http://localhost:5174',
-    'https://noovacor.com',
-    'https://noovacor-frontend.vercel.app',
-  ],
+  // Allow the configured production frontend and local Vite servers.
+  app.enableCors({
+    origin: [
+      'http://localhost:5173',
+      'http://localhost:5174',
+      process.env.FRONTEND_URL || 'https://noovacor.com',
+      'https://noovacor.com',
+      'https://www.noovacor.com',
+      'https://noovacor-frontend.vercel.app',
+    ],
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
   credentials: true,
   allowedHeaders: 'Content-Type, Accept, Authorization',

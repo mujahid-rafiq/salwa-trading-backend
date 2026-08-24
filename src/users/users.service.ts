@@ -17,6 +17,10 @@ export class UsersService {
     return await this.userRepository.save(user);
   }
 
+  generateReferralCode(): string {
+    return `SALWA${Math.random().toString(36).slice(2, 10).toUpperCase()}`;
+  }
+
   async findAll(): Promise<User[]> {
     return await this.userRepository.find();
   }
@@ -43,6 +47,33 @@ export class UsersService {
     return await this.userRepository.findOne({
       where: { phoneNumber },
     });
+  }
+
+  async findByReferralCode(referralCode: string): Promise<User | null> {
+    return await this.userRepository.findOne({
+      where: { referralCode: referralCode.trim().toUpperCase() },
+    });
+  }
+
+  async getReferralDetails(user: User) {
+    if (!user.referralCode) {
+      user.referralCode = this.generateReferralCode();
+      await this.save(user);
+    }
+
+    const directReferrals = await this.findByReferrer(user.id);
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+
+    return {
+      referralCode: user.referralCode,
+      referralLink: `${frontendUrl}/signup?referralCode=${user.referralCode}`,
+      directReferrals: directReferrals.map((referral) => ({
+        id: referral.id,
+        fullName: referral.fullName,
+        email: referral.email,
+        createdAt: referral.createdAt,
+      })),
+    };
   }
 
   async findByReferrer(referrerId: number): Promise<User[]> {

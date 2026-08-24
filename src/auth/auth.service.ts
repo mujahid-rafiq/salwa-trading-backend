@@ -43,6 +43,14 @@ export class AuthService {
       throw new BadRequestException('Phone number already exists');
     }
 
+    const referredBy = registerDto.referralCode
+      ? await this.usersService.findByReferralCode(registerDto.referralCode)
+      : null;
+
+    if (registerDto.referralCode && !referredBy) {
+      throw new BadRequestException('Invalid referral code');
+    }
+
     // Hash password
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
 
@@ -51,6 +59,8 @@ export class AuthService {
     // Save user with activation code
     const user = await this.usersService.create({
       ...registerDto,
+      referralCode: this.usersService.generateReferralCode(),
+      referredBy: referredBy ?? undefined,
       password: hashedPassword,
       role: Role.CLIENT,
       isVerified: false,

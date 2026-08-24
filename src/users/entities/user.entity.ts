@@ -99,6 +99,14 @@ export class User {
   })
   profileImage?: string;
 
+  @Column({
+    type: 'varchar',
+    length: 20,
+    unique: true,
+    nullable: true,
+  })
+  referralCode?: string;
+
   @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: 'referred_by' })
   referredBy?: User;
