@@ -145,7 +145,7 @@ export class WithdrawalsService {
       const requests: PackageRequest[] = await this.packageRequestsService.findByUser(user);
       const now = new Date();
       const profitRate = 0.08;
-         const profitPeriodDays = 30;
+      const profitPeriodDays = 30;
       let earnings = 0;
 
       for (const r of requests) {
@@ -158,7 +158,6 @@ export class WithdrawalsService {
         const elapsedDays = Math.floor(ms / (1000 * 60 * 60 * 24));
         const applicableDays = Math.min(elapsedDays, profitPeriodDays);
 
-        earnings += Number(r.amount) * profitRate;
         const dailyProfit = (Number(r.amount) * profitRate) / profitPeriodDays;
         const accrued = dailyProfit * applicableDays;
         earnings += accrued;
