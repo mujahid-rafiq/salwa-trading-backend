@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, MaxLength } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, MaxLength, Min } from 'class-validator';
 
 export class CreatePackageRequestDto {
   @ApiProperty({ example: 'Starter' })
@@ -12,7 +12,14 @@ export class CreatePackageRequestDto {
   @IsNotEmpty()
   @IsNumber()
   @IsPositive()
+  @Min(100)
   amount!: number;
+
+  @ApiProperty({ example: 'JazzCash' })
+  @IsNotEmpty()
+  @IsString()
+  @MaxLength(30)
+  paymentMethod!: string;
 
   @ApiProperty({ example: '1% Daily' })
   @IsNotEmpty()
