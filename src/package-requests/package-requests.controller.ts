@@ -34,6 +34,12 @@ export class PackageRequestsController {
     return this.packageRequestsService.findByUser(req.user);
   }
 
+  @Get('me/profit-history')
+  @ApiOperation({ summary: 'Get current user profit history' })
+  getProfitHistory(@Req() req: any) {
+    return this.packageRequestsService.getProfitHistory(req.user);
+  }
+
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @Get('admin/pending')

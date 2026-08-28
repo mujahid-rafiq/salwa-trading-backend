@@ -25,6 +25,9 @@ export class PackageRequest {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   amount!: number;
 
+  @Column({ type: 'varchar', length: 30, nullable: true })
+  paymentMethod?: string;
+
   @Column({ type: 'varchar', length: 20 })
   profitRate!: string;
 
