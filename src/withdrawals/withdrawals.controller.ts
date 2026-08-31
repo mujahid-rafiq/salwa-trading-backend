@@ -26,6 +26,12 @@ export class WithdrawalsController {
     return this.withdrawalsService.findByUser(req.user);
   }
 
+  @Get('me/history')
+  @ApiOperation({ summary: 'Get current user withdrawal history with status and dates' })
+  getMyHistory(@Req() req: any) {
+    return this.withdrawalsService.findByUser(req.user);
+  }
+
   @Get('balances')
   @ApiOperation({ summary: 'Get available balances (earnings and bonus) for current user' })
   getBalances(@Req() req: any) {
