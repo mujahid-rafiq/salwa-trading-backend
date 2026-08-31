@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Withdrawal } from './entities/withdrawal.entity';
 import { CreateWithdrawDto, PaymentMethod } from './dto/create-withdraw.dto';
 import { User } from '../users/entities/user.entity';
@@ -19,6 +19,17 @@ export class WithdrawalsService {
   ) {}
 
   async createWithdrawal(user: User, dto: CreateWithdrawDto) {
+    const balance = await this.getBalances(user);
+    const availableBalance = dto.source === 'earnings' ? balance.earnings : dto.source === 'bonus' ? balance.bonus : 0;
+
+    if (dto.amount < 20) {
+      throw new BadRequestException('Minimum withdrawal amount is $20.');
+    }
+
+    if (dto.amount > availableBalance) {
+      throw new BadRequestException(`Withdrawal amount exceeds your available ${dto.source} balance.`);
+    }
+
     const paymentDetails = {
       paymentMethod: dto.paymentMethod,
       bankName: dto.bankName,
@@ -209,9 +220,24 @@ export class WithdrawalsService {
         bonus = 0;
       }
 
+      const pendingAndApprovedWithdrawals = await this.withdrawalRepository.find({
+        where: {
+          user: { id: user.id },
+          status: In([WithdrawalStatus.PENDING, WithdrawalStatus.COMPLETED]),
+        },
+      });
+
+      const lockedEarnings = pendingAndApprovedWithdrawals
+        .filter((withdrawal) => withdrawal.source === 'earnings')
+        .reduce((sum, withdrawal) => sum + Number(withdrawal.amount || 0), 0);
+
+      const lockedBonus = pendingAndApprovedWithdrawals
+        .filter((withdrawal) => withdrawal.source === 'bonus')
+        .reduce((sum, withdrawal) => sum + Number(withdrawal.amount || 0), 0);
+
       return {
-        earnings: Number(earnings.toFixed(2)),
-        bonus,
+        earnings: Number(Math.max(0, earnings - lockedEarnings).toFixed(2)),
+        bonus: Number(Math.max(0, bonus - lockedBonus).toFixed(2)),
       };
     } catch (err) {
       return { earnings: 0, bonus: 0 };
