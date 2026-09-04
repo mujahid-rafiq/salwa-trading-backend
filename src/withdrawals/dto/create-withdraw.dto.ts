@@ -3,6 +3,7 @@ import { IsEnum, IsNumber, IsOptional, IsPositive, IsString, Length } from 'clas
 export enum WithdrawSource {
   EARNINGS = 'earnings',
   BONUS = 'bonus',
+  COMBINED = 'combined',
 }
 
 export enum PaymentMethod {
