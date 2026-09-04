@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Withdrawal } from './entities/withdrawal.entity';
-import { CreateWithdrawDto, PaymentMethod } from './dto/create-withdraw.dto';
+import { CreateWithdrawDto, PaymentMethod, WithdrawSource } from './dto/create-withdraw.dto';
 import { User } from '../users/entities/user.entity';
 import { PackageRequestsService } from '../package-requests/package-requests.service';
 import { PackageRequest } from '../package-requests/entities/package-request.entity';
@@ -20,7 +20,12 @@ export class WithdrawalsService {
 
   async createWithdrawal(user: User, dto: CreateWithdrawDto) {
     const balance = await this.getBalances(user);
-    const availableBalance = dto.source === 'earnings' ? balance.earnings : dto.source === 'bonus' ? balance.bonus : 0;
+    const availableBalance =
+      dto.source === WithdrawSource.EARNINGS
+        ? balance.earnings
+        : dto.source === WithdrawSource.BONUS
+          ? balance.bonus
+          : balance.total;
 
     if (dto.amount < 20) {
       throw new BadRequestException('Minimum withdrawal amount is $20.');
@@ -235,12 +240,19 @@ export class WithdrawalsService {
         .filter((withdrawal) => withdrawal.source === 'bonus')
         .reduce((sum, withdrawal) => sum + Number(withdrawal.amount || 0), 0);
 
+      const lockedCombined = pendingAndApprovedWithdrawals
+        .filter((withdrawal) => withdrawal.source === 'combined')
+        .reduce((sum, withdrawal) => sum + Number(withdrawal.amount || 0), 0);
+
+      const total = Math.max(0, earnings + bonus - lockedEarnings - lockedBonus - lockedCombined);
+
       return {
         earnings: Number(Math.max(0, earnings - lockedEarnings).toFixed(2)),
         bonus: Number(Math.max(0, bonus - lockedBonus).toFixed(2)),
+        total: Number(total.toFixed(2)),
       };
     } catch (err) {
-      return { earnings: 0, bonus: 0 };
+      return { earnings: 0, bonus: 0, total: 0 };
     }
   }
 }
