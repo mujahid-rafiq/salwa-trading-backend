@@ -244,12 +244,17 @@ export class WithdrawalsService {
         .filter((withdrawal) => withdrawal.source === 'combined')
         .reduce((sum, withdrawal) => sum + Number(withdrawal.amount || 0), 0);
 
-      const total = Math.max(0, earnings + bonus - lockedEarnings - lockedBonus - lockedCombined);
+      const availableEarnings = Math.max(0, earnings - lockedEarnings);
+      const availableBonus = Math.max(0, bonus - lockedBonus);
+      const combinedWithdrawalFromEarnings = Math.min(availableEarnings, lockedCombined);
+      const combinedWithdrawalFromBonus = lockedCombined - combinedWithdrawalFromEarnings;
+      const adjustedEarnings = availableEarnings - combinedWithdrawalFromEarnings;
+      const adjustedBonus = Math.max(0, availableBonus - combinedWithdrawalFromBonus);
 
       return {
-        earnings: Number(Math.max(0, earnings - lockedEarnings).toFixed(2)),
-        bonus: Number(Math.max(0, bonus - lockedBonus).toFixed(2)),
-        total: Number(total.toFixed(2)),
+        earnings: Number(adjustedEarnings.toFixed(2)),
+        bonus: Number(adjustedBonus.toFixed(2)),
+        total: Number((adjustedEarnings + adjustedBonus).toFixed(2)),
       };
     } catch (err) {
       return { earnings: 0, bonus: 0, total: 0 };
