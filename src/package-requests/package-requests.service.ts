@@ -7,6 +7,7 @@ import { CreatePackageRequestDto } from './dto/create-package-request.dto';
 import { PackageRequestStatus } from '../enums/package-request-status.enum';
 import { User } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
+import { PackageRequestType } from '../enums/package-request-type.enum';
 
 @Injectable()
 export class PackageRequestsService {
@@ -20,6 +21,7 @@ export class PackageRequestsService {
     const request = this.packageRequestRepository.create({
       user,
       packageName: createDto.packageName,
+      requestType: PackageRequestType.INVESTMENT,
       amount: createDto.amount,
       paymentMethod: createDto.paymentMethod,
       profitRate: createDto.profitRate,
@@ -45,6 +47,39 @@ export class PackageRequestsService {
     });
   }
 
+  async createRegistrationRequest(user: User, createDto: CreatePackageRequestDto): Promise<PackageRequest> {
+    const existingRequest = await this.packageRequestRepository.findOne({
+      where: {
+        user: { id: user.id },
+        requestType: PackageRequestType.REGISTRATION,
+        status: PackageRequestStatus.PENDING,
+      },
+    });
+
+    if (existingRequest) {
+      throw new BadRequestException('You already have a registration request pending review');
+    }
+
+    if (user.registrationApproved) {
+      throw new BadRequestException('Your account registration is already approved');
+    }
+
+    const request = this.packageRequestRepository.create({
+      user,
+      requestType: PackageRequestType.REGISTRATION,
+      packageName: 'Account Registration',
+      amount: 10,
+      paymentMethod: createDto.paymentMethod,
+      profitRate: '0%',
+      duration: 'Account access',
+      transactionId: createDto.transactionId,
+      paymentScreenshotUrl: createDto.paymentScreenshotUrl,
+      notes: createDto.notes,
+    });
+
+    return await this.packageRequestRepository.save(request);
+  }
+
   async getProfitHistory(user: User) {
     const requests = await this.findByUser(user);
     const now = new Date();
@@ -53,7 +88,11 @@ export class PackageRequestsService {
     const dayInMilliseconds = 1000 * 60 * 60 * 24;
 
     const history = requests
-      .filter((request) => request.status === PackageRequestStatus.APPROVED)
+      .filter(
+        (request) =>
+          request.status === PackageRequestStatus.APPROVED &&
+          request.requestType === PackageRequestType.INVESTMENT,
+      )
       .flatMap((request) => {
         const receivedAt = request.reviewedAt ?? request.createdAt;
         const elapsedDays = Math.min(
@@ -74,10 +113,13 @@ export class PackageRequestsService {
       .sort((first, second) => second.receivedAt.getTime() - first.receivedAt.getTime());
 
     const hasActiveDeposit = requests.some(
-      (request) => request.status === PackageRequestStatus.APPROVED,
+      (request) =>
+        request.status === PackageRequestStatus.APPROVED &&
+        request.requestType === PackageRequestType.INVESTMENT,
     );
+    const canEarnReferralBonus = hasActiveDeposit || user.registrationApproved;
 
-    if (hasActiveDeposit) {
+    if (canEarnReferralBonus) {
       const levelRates = [0.02, 0.02, 0.01, 0.01, 0.01];
       let levelMembers = await this.usersService.findByReferrer(user.id);
 
@@ -86,7 +128,10 @@ export class PackageRequestsService {
           const memberRequests = await this.findByUser(member);
 
           for (const request of memberRequests) {
-            if (request.status !== PackageRequestStatus.APPROVED) continue;
+            if (
+              request.status !== PackageRequestStatus.APPROVED ||
+              request.requestType !== PackageRequestType.INVESTMENT
+            ) continue;
 
             const receivedAt = request.reviewedAt ?? request.createdAt;
             const elapsedDays = Math.min(
@@ -96,7 +141,7 @@ export class PackageRequestsService {
             const dailyProfit = (Number(request.amount) * profitRate) / profitPeriodDays;
             const source = `${member.fullName || member.email} deposit (Level ${level + 1})`;
 
-            if (level === 0) {
+            if (level === 0 && hasActiveDeposit) {
               history.push({
                 id: `referral-${request.id}-direct`,
                 receivedAt: new Date(receivedAt),
@@ -137,6 +182,19 @@ export class PackageRequestsService {
     return await this.packageRequestRepository.find({
       where: {
         status: PackageRequestStatus.PENDING,
+        requestType: PackageRequestType.INVESTMENT,
+      },
+      order: {
+        createdAt: 'DESC',
+      },
+    });
+  }
+
+  async findPendingRegistrationRequests(): Promise<PackageRequest[]> {
+    return await this.packageRequestRepository.find({
+      where: {
+        status: PackageRequestStatus.PENDING,
+        requestType: PackageRequestType.REGISTRATION,
       },
       order: {
         createdAt: 'DESC',
@@ -184,6 +242,28 @@ export class PackageRequestsService {
     return await this.packageRequestRepository.save(request);
   }
 
+  async approveRegistrationRequest(id: number, adminUser: User): Promise<PackageRequest> {
+    const request = await this.packageRequestRepository.findOne({
+      where: { id, requestType: PackageRequestType.REGISTRATION },
+    });
+
+    if (!request) {
+      throw new NotFoundException('Registration request not found');
+    }
+
+    if (request.status !== PackageRequestStatus.PENDING) {
+      throw new BadRequestException('Only pending registration requests can be approved');
+    }
+
+    request.status = PackageRequestStatus.APPROVED;
+    request.reviewedAt = new Date();
+    request.reviewedBy = adminUser.email;
+    request.user.registrationApproved = true;
+    await this.usersService.save(request.user);
+
+    return await this.packageRequestRepository.save(request);
+  }
+
   async rejectRequest(id: number, adminUser: User, reason?: string): Promise<PackageRequest> {
     const request = await this.packageRequestRepository.findOne({
       where: { id },
@@ -195,6 +275,27 @@ export class PackageRequestsService {
 
     if (request.status !== PackageRequestStatus.PENDING) {
       throw new BadRequestException('Only pending requests can be rejected');
+    }
+
+    request.status = PackageRequestStatus.REJECTED;
+    request.reviewedAt = new Date();
+    request.reviewedBy = adminUser.email;
+    request.notes = reason ? `${request.notes || ''} Rejection reason: ${reason}` : request.notes;
+
+    return await this.packageRequestRepository.save(request);
+  }
+
+  async rejectRegistrationRequest(id: number, adminUser: User, reason?: string): Promise<PackageRequest> {
+    const request = await this.packageRequestRepository.findOne({
+      where: { id, requestType: PackageRequestType.REGISTRATION },
+    });
+
+    if (!request) {
+      throw new NotFoundException('Registration request not found');
+    }
+
+    if (request.status !== PackageRequestStatus.PENDING) {
+      throw new BadRequestException('Only pending registration requests can be rejected');
     }
 
     request.status = PackageRequestStatus.REJECTED;
