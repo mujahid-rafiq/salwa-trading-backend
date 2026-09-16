@@ -8,6 +8,7 @@ import { PackageRequestsService } from '../package-requests/package-requests.ser
 import { PackageRequest } from '../package-requests/entities/package-request.entity';
 import { UsersService } from '../users/users.service';
 import { WithdrawalStatus } from '../enums/withdrawal-status.enum';
+import { PackageRequestType } from '../enums/package-request-type.enum';
 
 @Injectable()
 export class WithdrawalsService {
@@ -165,7 +166,7 @@ export class WithdrawalsService {
       let earnings = 0;
 
       for (const r of requests) {
-        if (r.status !== 'Approved') continue;
+        if (r.status !== 'Approved' || r.requestType !== PackageRequestType.INVESTMENT) continue;
 
         const reviewedAt = r.reviewedAt ?? r.createdAt;
         if (!reviewedAt) continue;
@@ -185,10 +186,14 @@ export class WithdrawalsService {
       try {
         const ownRequests = await this.packageRequestsService.findByUser(user);
         const hasActivePackage = ownRequests.some(
-          (request) => request.status === 'Approved',
+          (request) =>
+            request.status === 'Approved' &&
+            request.requestType === PackageRequestType.INVESTMENT,
         );
 
-        if (hasActivePackage) {
+        const canEarnReferralBonus = hasActivePackage || user.registrationApproved;
+
+        if (canEarnReferralBonus) {
           const levelRates = [0.02, 0.02, 0.01, 0.01, 0.01];
           let levelMembers = await this.usersService.findByReferrer(user.id);
 
@@ -196,9 +201,9 @@ export class WithdrawalsService {
             for (const member of levelMembers) {
               const memberRequests = await this.packageRequestsService.findByUser(member);
               for (const request of memberRequests) {
-                if (request.status !== 'Approved') continue;
+                if (request.status !== 'Approved' || request.requestType !== PackageRequestType.INVESTMENT) continue;
 
-                if (level === 0) {
+                if (level === 0 && hasActivePackage) {
                   bonus += Number(request.amount) * 0.08;
                 }
 

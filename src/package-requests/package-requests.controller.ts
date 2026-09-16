@@ -10,6 +10,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../enums/role.enum';
 import { CreatePackageRequestDto } from './dto/create-package-request.dto';
+import { CreateRegistrationRequestDto } from './dto/create-registration-request.dto';
 import { PackageRequestsService } from './package-requests.service';
 
 @ApiTags('Package Requests')
@@ -26,6 +27,13 @@ export class PackageRequestsController {
   @ApiResponse({ status: 201, description: 'Package request submitted successfully' })
   submitRequest(@Req() req: any, @Body() createDto: CreatePackageRequestDto) {
     return this.packageRequestsService.createRequest(req.user, createDto);
+  }
+
+  @Post('registration')
+  @ApiOperation({ summary: 'Submit an account registration payment request' })
+  @ApiResponse({ status: 201, description: 'Registration payment request submitted successfully' })
+  submitRegistrationRequest(@Req() req: any, @Body() createDto: CreateRegistrationRequestDto) {
+    return this.packageRequestsService.createRegistrationRequest(req.user, createDto);
   }
 
   @Get('me')
@@ -50,6 +58,14 @@ export class PackageRequestsController {
 
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
+  @Get('admin/registration-pending')
+  @ApiOperation({ summary: 'Get pending account registration requests for admin review' })
+  getPendingRegistrationRequests() {
+    return this.packageRequestsService.findPendingRegistrationRequests();
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
   @Get('admin/dashboard')
   @ApiOperation({ summary: 'Get admin dashboard stats for package requests' })
   getAdminDashboard() {
@@ -69,6 +85,17 @@ export class PackageRequestsController {
 
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
+  @Post('admin/registration/:id/approve')
+  @ApiOperation({ summary: 'Approve a pending account registration request' })
+  approveRegistrationRequest(
+    @Req() req: any,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.packageRequestsService.approveRegistrationRequest(id, req.user);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
   @Post('admin/:id/reject')
   @ApiOperation({ summary: 'Reject a pending package purchase request' })
   rejectRequest(
@@ -77,5 +104,17 @@ export class PackageRequestsController {
     @Body('reason') reason?: string,
   ) {
     return this.packageRequestsService.rejectRequest(id, req.user, reason);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  @Post('admin/registration/:id/reject')
+  @ApiOperation({ summary: 'Reject a pending account registration request' })
+  rejectRegistrationRequest(
+    @Req() req: any,
+    @Param('id', ParseIntPipe) id: number,
+    @Body('reason') reason?: string,
+  ) {
+    return this.packageRequestsService.rejectRegistrationRequest(id, req.user, reason);
   }
 }

@@ -86,6 +86,12 @@ export class User {
   })
   isActive!: boolean;
 
+  @Column({
+    type: 'boolean',
+    default: false,
+  })
+  registrationApproved!: boolean;
+
   @CreateDateColumn()
   createdAt!: Date;
 

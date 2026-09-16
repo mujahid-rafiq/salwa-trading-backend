@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { PackageRequestStatus } from '../../enums/package-request-status.enum';
+import { PackageRequestType } from '../../enums/package-request-type.enum';
 
 @Entity({ name: 'package_requests' })
 export class PackageRequest {
@@ -21,6 +22,13 @@ export class PackageRequest {
 
   @Column({ type: 'varchar', length: 100 })
   packageName!: string;
+
+  @Column({
+    type: 'enum',
+    enum: PackageRequestType,
+    default: PackageRequestType.INVESTMENT,
+  })
+  requestType!: PackageRequestType;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   amount!: number;
