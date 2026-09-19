@@ -68,7 +68,7 @@ export class AuthService {
       emailVerificationExpiresAt: new Date(Date.now() + 15 * 60 * 1000),
     });
 
-    // Remove password from response
+    // Remove password from response....
     const { password, ...userWithoutPassword } = user;
 
     try {
