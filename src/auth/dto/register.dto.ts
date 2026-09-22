@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import {
   IsEmail,
   IsNotEmpty,
@@ -26,10 +27,19 @@ export class RegisterDto {
   email!: string;
 
   @ApiProperty({
-    example: '03001234567',
+    example: '+12025550123',
+    description: 'International phone number in E.164 format',
   })
   @IsNotEmpty()
-  @Matches(/^(\+92|0)?3\d{9}$/)
+  @IsString()
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.replace(/[\s\-().]/g, '') : value,
+  )
+  @Matches(/^\+[1-9]\d{6,14}$/, {
+    message:
+      'Phone number must include a country code, e.g. +12025550123 or +447911123456',
+  })
+  @MaxLength(16)
   phoneNumber!: string;
 
   @ApiProperty({
