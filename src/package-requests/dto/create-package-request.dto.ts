@@ -8,11 +8,11 @@ export class CreatePackageRequestDto {
   @MaxLength(50)
   packageName!: string;
 
-  @ApiProperty({ example: 50 })
+  @ApiProperty({ example: 20 })
   @IsNotEmpty()
   @IsNumber()
   @IsPositive()
-  @Min(100)
+  @Min(20)
   amount!: number;
 
   @ApiProperty({ example: 'JazzCash' })
@@ -21,13 +21,13 @@ export class CreatePackageRequestDto {
   @MaxLength(30)
   paymentMethod!: string;
 
-  @ApiProperty({ example: '1% Daily' })
+  @ApiProperty({ example: '1% daily for 100 days' })
   @IsNotEmpty()
   @IsString()
-  @MaxLength(20)
+  @MaxLength(40)
   profitRate!: string;
 
-  @ApiProperty({ example: '30 Days' })
+  @ApiProperty({ example: '100 Days' })
   @IsNotEmpty()
   @IsString()
   @MaxLength(20)

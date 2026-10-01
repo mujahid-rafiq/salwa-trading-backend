@@ -83,8 +83,8 @@ export class PackageRequestsService {
   async getProfitHistory(user: User) {
     const requests = await this.findByUser(user);
     const now = new Date();
-    const profitRate = 0.12;
-    const profitPeriodDays = 30;
+    const profitRate = 1;
+    const profitPeriodDays = 100;
     const dayInMilliseconds = 1000 * 60 * 60 * 24;
 
     const history = requests
