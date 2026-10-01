@@ -36,7 +36,7 @@ export class PackageRequest {
   @Column({ type: 'varchar', length: 30, nullable: true })
   paymentMethod?: string;
 
-  @Column({ type: 'varchar', length: 20 })
+  @Column({ type: 'varchar', length: 40 })
   profitRate!: string;
 
   @Column({ type: 'varchar', length: 20 })

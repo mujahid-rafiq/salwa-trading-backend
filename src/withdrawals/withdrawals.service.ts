@@ -161,8 +161,8 @@ export class WithdrawalsService {
     try {
       const requests: PackageRequest[] = await this.packageRequestsService.findByUser(user);
       const now = new Date();
-      const profitRate = 0.12;
-      const profitPeriodDays = 30;
+      const profitRate = 1;
+      const profitPeriodDays = 100;
       let earnings = 0;
 
       for (const r of requests) {
