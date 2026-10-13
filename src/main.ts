@@ -97,7 +97,7 @@ async function bootstrap() {
   // TEMPORARY OFFLINE MODE: set MAINTENANCE_MODE=true in hPanel to go offline
   if (process.env.MAINTENANCE_MODE === 'true') {
     app.use((req, res) => {
-      res.status(503).send('Site temporarily offline');
+      res.status(503).send('Your Site is temporarily Blocked');
     });
   }
 
